@@ -150,17 +150,7 @@ const WaitlistPage = () => {
               </button>
             </nav>
 
-            {/* Desktop Auth Buttons */}
-            <div className="hidden md:flex items-center space-x-4">
-              <button
-                onClick={() => window.location.href = "/login"}
-                className={`font-medium transition-colors hover:text-purple-600 ${
-                  isScrolled ? 'text-gray-700' : 'text-white/90'
-                }`}
-              >
-                Already have account?
-              </button>
-            </div>
+        
 
             {/* Mobile Menu Button */}
             <button
@@ -202,12 +192,7 @@ const WaitlistPage = () => {
                 About
               </button>
               <hr className="border-gray-200" />
-              <button
-                onClick={() => window.location.href = "/login"}
-                className="block w-full text-left font-medium text-gray-700 hover:text-purple-600 transition-colors"
-              >
-                Already have account?
-              </button>
+              
             </div>
           </motion.div>
         )}
@@ -295,7 +280,7 @@ const WaitlistPage = () => {
                     {/* User Type Select */}
                     <div className="text-left md:col-span-2"> {/* Made it full width on smaller screens */}
                       <label htmlFor="userType" className="block text-sm font-semibold text-white mb-2"> {/* Changed text-black to text-white for consistency with the form's background */}
-                        I am interested in *
+                        I am interested in
                       </label>
                       <select
                         id="userType"
@@ -353,7 +338,7 @@ const WaitlistPage = () => {
                   </motion.div>
                   <h3 className="text-2xl font-bold text-white mb-2">You are In!</h3>
                   <p className="text-purple-100 mb-4">
-                    Welcome to the Ride-Geng community! We will notify you as soon as we launch in {location}.
+                    Welcome to the Ride-Geng community! We will notify you as soon as we launch in your city!.
                   </p>
                   <p className="text-sm text-purple-200">
                     Check your email for exclusive updates and early access perks.
@@ -370,9 +355,9 @@ const WaitlistPage = () => {
               className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto"
             >
               {[
-                { number: "5k+", label: "People Waiting" },
-                { number: "12", label: "Cities Coming" },
-                { number: "Q2", label: "Launch Date" }
+                { number: "1k+", label: "People Waiting" },
+                { number: "5", label: "Cities Coming" },
+                { number: "Soon", label: "Launch Date" }
               ].map((stat, index) => (
                 <motion.div
                   key={index}
