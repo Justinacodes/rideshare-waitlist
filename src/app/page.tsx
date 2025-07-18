@@ -1,4 +1,3 @@
-
 "use client";
 import { useState, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -39,11 +38,16 @@ const WaitlistPage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [email, setEmail] = useState("");
-  const [location, setLocation] = useState("");
-  const [userType, setUserType] = useState(""); // State for user type
+  const [formData, setFormData] = useState({
+    email: '',
+    phone: '', // Phone is not sent to API, but kept for potential future use or local storage
+    city: '',
+    userType: '',
+    wantsUpdates: false // Not sent to API, but kept for potential future use or local storage
+  });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 500], [0, 150]);
 
@@ -70,7 +74,7 @@ const WaitlistPage = () => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, );
+  }, [heroSlides.length]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,17 +84,86 @@ const WaitlistPage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSubmit = async () => {
-    if (!email || !location || !userType) return; // Added userType validation
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
 
-    setIsLoading(true);
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    setIsSubmitted(true);
-    setIsLoading(false);
+    if (error) setError('');
   };
+
+//  // No longer processing phone number on frontend, backend will handle or ignore if not needed.
+//   const processPhoneNumber = (phone: string): string | null => {
+//     if (!phone.trim()) return null;
+//     const digitsOnly = phone.replace(/\D/g, '');
+//     if (digitsOnly.length < 10) {
+//       throw new Error('Please enter a valid phone number with at least 10 digits.');
+//     }
+//     return digitsOnly;
+//   };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+  if (e) e.preventDefault();
+
+  // Client-side validation for required fields before sending to API
+  if (!formData.email || !formData.city || !formData.userType) {
+    setError('Please fill in all required fields.');
+    return;
+  }
+
+  setIsLoading(true);
+  setError(''); // Clear previous errors
+
+  try {
+    const dataToSend = {
+      email: formData.email,
+      location: formData.city, // Map 'city' from frontend to 'location' for backend
+      userType: formData.userType,
+      phone: formData.phone, // CORRECTED: Include phone from formData
+      updates: formData.wantsUpdates // CORRECTED: Map wantsUpdates from frontend to 'updates' for backend
+    };
+
+    // The API route path might be `/api/waitlist` or `/api/join-waitlist` based on your setup.
+    // Ensure this matches your actual API route file name (e.g., app/api/waitlist/route.ts)
+    const response = await fetch('/api/join-waitlist', { // Assuming your API route is at /api/waitlist
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(dataToSend),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      const apiErrorMessage = result.message || 'An unknown error occurred on the server.';
+      throw new Error(apiErrorMessage);
+    }
+
+    // Success
+    setIsSubmitted(true);
+    // Reset form data after successful submission
+    setFormData({
+      email: '',
+      phone: '',
+      city: '',
+      userType: '',
+      wantsUpdates: false
+    });
+
+  } catch (err) {
+    console.error('Frontend API Call Error:', err);
+    let displayError = 'An unexpected error occurred. Please try again.';
+    if (err instanceof Error) {
+      displayError = err.message;
+    }
+    setError(displayError);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const scrollToSection = (sectionId: string) => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
@@ -150,7 +223,17 @@ const WaitlistPage = () => {
               </button>
             </nav>
 
-        
+            {/* Desktop Auth Buttons */}
+            {/* <div className="hidden md:flex items-center space-x-4">
+              <button
+                onClick={() => window.location.href = "/login"}
+                className={`font-medium transition-colors hover:text-purple-600 ${
+                  isScrolled ? 'text-gray-700' : 'text-white/90'
+                }`}
+              >
+                Already have account?
+              </button>
+            </div> */}
 
             {/* Mobile Menu Button */}
             <button
@@ -192,7 +275,7 @@ const WaitlistPage = () => {
                 About
               </button>
               <hr className="border-gray-200" />
-              
+           
             </div>
           </motion.div>
         )}
@@ -249,77 +332,135 @@ const WaitlistPage = () => {
               </p>
             </motion.div>
 
-            {/* Waitlist Form */}
+            {/* Enhanced Waitlist Form */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
               className="max-w-2xl mx-auto mb-12"
+              id="waitlist"
             >
               {!isSubmitted ? (
                 <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <input
-                        type="email"
-                        placeholder="Enter your email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300"
-                      />
+                  {error && (
+                    <div className="mb-6 p-4 bg-red-500/20 border border-red-300/30 rounded-xl text-white text-sm">
+                      <div className="font-semibold mb-1">Error:</div>
+                      {error}
                     </div>
-                    <div>
-                      <input
-                        type="text"
-                        placeholder="Your location (city, state)"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300"
-                      />
-                    </div>
-                    {/* User Type Select */}
-                    <div className="text-left md:col-span-2"> {/* Made it full width on smaller screens */}
-                      <label htmlFor="userType" className="block text-sm font-semibold text-white mb-2"> {/* Changed text-black to text-white for consistency with the form's background */}
-                        I am interested in
-                      </label>
-                      <select
-                        id="userType"
-                        name="userType"
-                        required
-                        value={userType}
-                        onChange={(e) => setUserType(e.target.value)} // Corrected onChange handler
-                        className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300"
-                      >
-                        <option value="" className="text-gray-800">Select an option</option> {/* Added class for visibility */}
-                        <option value="rider" className="text-gray-800">Riding (as a passenger)</option>
-                        <option value="driver" className="text-gray-800">Driving (earning money)</option>
-                        <option value="both" className="text-gray-800">Both riding and driving</option>
-                      </select>
-                    </div>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleSubmit}
-                    disabled={isLoading || !email || !location || !userType} 
-                    className="w-full bg-white text-purple-700 px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {isLoading ? (
-                      <>
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="w-5 h-5 border-2 border-purple-700 border-t-transparent rounded-full"
+                  )}
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Flex container for side-by-side fields */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Email Input */}
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-semibold text-white mb-2">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          required
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          placeholder="your@example.com"
+                          className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300"
                         />
-                        Joining...
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="w-5 h-5" />
-                        Join the Waitlist
-                      </>
-                    )}
-                  </motion.button>
+                      </div>
+
+                      {/* Phone Input (Kept for UI, but not sent to current API) */}
+                      <div>
+                        <label htmlFor="phone" className="block text-sm font-semibold text-white mb-2">
+                          Phone Number (Optional)
+                        </label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          placeholder="e.g., +2348012345678"
+                          className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300"
+                        />
+                      </div>
+
+                      {/* City Input */}
+                      <div>
+                        <label htmlFor="city" className="block text-sm font-semibold text-white mb-2">
+                          Your City *
+                        </label>
+                        <input
+                          type="text"
+                          id="city"
+                          name="city"
+                          required
+                          value={formData.city}
+                          onChange={handleInputChange}
+                          placeholder="e.g., Lagos"
+                          className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300"
+                        />
+                      </div>
+
+                      {/* User Type Select */}
+                      <div>
+                          <label htmlFor="userType" className="block text-sm font-semibold text-white mb-2">
+                            I am interested in *
+                          </label>
+                          <select
+                            id="userType"
+                            name="userType"
+                            required
+                            value={formData.userType}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300"
+                          >
+                            <option value="" className="text-gray-800">Select an option</option>
+                            <option value="rider" className="text-gray-800">Riding (as a passenger)</option>
+                            <option value="driver" className="text-gray-800">Driving (earning money)</option>
+                            <option value="both" className="text-gray-800">Both riding and driving</option>
+                          </select>
+                      </div>
+                    </div>
+
+                    {/* Updates Checkbox (Kept for UI, but not sent to current API) */}
+                    <div className="flex items-center gap-3 text-left">
+                      <input
+                        type="checkbox"
+                        id="wantsUpdates"
+                        name="wantsUpdates"
+                        checked={formData.wantsUpdates}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 text-purple-600 bg-white/20 border-white/30 rounded focus:ring-purple-500"
+                      />
+                      <label htmlFor="wantsUpdates" className="text-sm text-white/90">
+                        Send me updates about the launch and exclusive offers
+                      </label>
+                    </div>
+
+                    <motion.button
+                      type="submit"
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      disabled={isLoading || !formData.email || !formData.city || !formData.userType}
+                      className="w-full bg-white text-purple-700 px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isLoading ? (
+                        <>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-5 h-5 border-2 border-purple-700 border-t-transparent rounded-full"
+                          />
+                          Joining...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="w-5 h-5" />
+                          Join the Waitlist
+                        </>
+                      )}
+                    </motion.button>
+                  </form>
                 </div>
               ) : (
                 <motion.div
@@ -336,9 +477,9 @@ const WaitlistPage = () => {
                   >
                     <Check className="w-8 h-8 text-white" />
                   </motion.div>
-                  <h3 className="text-2xl font-bold text-white mb-2">You are In!</h3>
+                  <h3 className="text-2xl font-bold text-white mb-2">Welcome aboard!</h3>
                   <p className="text-purple-100 mb-4">
-                    Welcome to the Ride-Geng community! We will notify you as soon as we launch in your city!.
+                    You are now on our exclusive waitlist. We will notify you as soon as we launch in your area.
                   </p>
                   <p className="text-sm text-purple-200">
                     Check your email for exclusive updates and early access perks.
@@ -356,7 +497,7 @@ const WaitlistPage = () => {
             >
               {[
                 { number: "1k+", label: "People Waiting" },
-                { number: "5", label: "Cities Coming" },
+                { number: "12", label: "Cities Coming" },
                 { number: "Soon", label: "Launch Date" }
               ].map((stat, index) => (
                 <motion.div

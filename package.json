@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^2.5.0",
     "appwrite": "^18.1.1",
     "framer-motion": "^12.23.0",
     "lucide-react": "^0.525.0",
