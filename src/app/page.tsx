@@ -191,7 +191,7 @@ const WaitlistPage = () => {
               <span className={`text-xl font-bold transition-colors ${
                 isScrolled ? 'text-gray-900' : 'text-white'
               }`}>
-                Ride-<span className="text-purple-600">geng</span>
+                Ride-<span className="text-purple-400">geng</span>
               </span>
             </div>
 
