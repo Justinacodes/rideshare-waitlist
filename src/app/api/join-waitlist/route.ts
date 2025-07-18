@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
                         <p>Stay tuned and get ready to ride!</p>
                         <br>
                         <p>The Ride-Geng Team</p>
-                        <p><a href="https://ridegeng.com">Visit our website</a></p>
+        
                     </body>
                 </html>
             `,
@@ -98,7 +98,6 @@ export async function POST(request: NextRequest) {
                 Stay tuned and get ready to ride!
 
                 The Ride-Geng Team
-                Visit our website: https://ridegeng.com
             `
         };
 
