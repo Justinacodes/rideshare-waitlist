@@ -479,7 +479,7 @@ const WaitlistPage = () => {
                   </motion.div>
                   <h3 className="text-2xl font-bold text-white mb-2">Welcome aboard!</h3>
                   <p className="text-purple-100 mb-4">
-                    You are now on our exclusive waitlist. We will notify you as soon as we launch in your area.
+                    You are now on our exclusive waitlist, please check your promotions folder. We will notify you as soon as we launch in your area.
                   </p>
                   <p className="text-sm text-purple-200">
                     Check your email for exclusive updates and early access perks.
@@ -497,7 +497,7 @@ const WaitlistPage = () => {
             >
               {[
                 { number: "1k+", label: "People Waiting" },
-                { number: "12", label: "Cities Coming" },
+                { number: "4", label: "Cities Coming" },
                 { number: "Soon", label: "Launch Date" }
               ].map((stat, index) => (
                 <motion.div
